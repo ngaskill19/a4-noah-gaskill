@@ -24,10 +24,12 @@ Do the following to complete this assignment:
 Sample Readme (delete the above when you're ready to submit, and modify the below so with your links and descriptions)
 ---
 
-## Your Web Application Title
+## Cookbook
 
 your hosting link e.g. http://a4-charlieroberts.me
 
 Include a very brief summary of your project here and what you changed / added to assignment #3. Briefly (3–4 sentences) answer the following question: did the new technology improve or hinder the development experience?
 
-Unlike previous assignments, this assignment will be solely graded on whether or not you successfully complete it. Partial credit will be generously given.
+For this project, I took my Cookbook recipe manager website from A3, and rebuilt it using react. My app now uses a use state to conditionally display either the login or main page, so I had to change my login routes to send the login status from the session, rather than doing the redirects. I couldn't find another way with basic React to handle the Login page without at least integrating it somewhat, though I know we didn't need to use React for it. Otherwise, my website is structured similarly, though all the code is broken up into different componenets to organize it better.
+
+I feel like the process of converting the assignment over to React does hinder things somewhat, with needing to decide how to break it into componenets, and getting use to useStates and whatnot. But once the conversion is done, I can see the benefit of doing future development in react. The component system is nice, especially to help organize the Javascript and not have a giant client .js file. And since my websites also constructs so much HTML in that code, the JSX does help to make that easier as well.
