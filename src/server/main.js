@@ -4,6 +4,7 @@ import ViteExpress from 'vite-express'
 import cookieSession from 'cookie-session'
 import bcrypt from 'bcryptjs'
 import{MongoClient, ObjectId} from 'mongodb'
+import path from 'path'
 
 const app = express()
 
@@ -15,6 +16,7 @@ ViteExpress.config({ mode: "development" });
 
 app.use( express.json() )
 app.use(express.urlencoded({extended:true}))
+app.use(express.static(path.resolve('dist')))
 
 app.use( cookieSession({
   name: 'session',
