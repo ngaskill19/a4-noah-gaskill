@@ -16,6 +16,10 @@ ol, ul{
 ol > li, ul > li{
   display:list-item !important;
 }
+.background{
+  background-image: url('/brown-gingham.jpg');
+  background-size: cover;
+}
 
 /* #root {
   max-width: 1280px;

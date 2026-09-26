@@ -1,8 +1,7 @@
-require('dotenv').config()
-
+import 'dotenv/config'
 import express from  'express'
 import ViteExpress from 'vite-express'
-import cookie from 'cookie-session'
+import cookieSession from 'cookie-session'
 import bcrypt from 'bcryptjs'
 import{MongoClient, ObjectId} from 'mongodb'
 
@@ -12,11 +11,12 @@ const app = express()
 //   { name:'buy groceries', completed:false }
 // ]
 
-app.use(express.static('public'))
+ViteExpress.config({ mode: "development" });
+
 app.use( express.json() )
 app.use(express.urlencoded({extended:true}))
 
-app.use( cookie({
+app.use( cookieSession({
   name: 'session',
   //made using randomkeygen.com
   keys: ['Ja6S?-5ta_ryIE=<', 'pX20sqIPa>N-#a1r']
@@ -56,11 +56,11 @@ async function run() {
       next()
     }
     else{
-      res.status(503).send
+      res.status(503).send()
     }
   })
 
-  app.post( '/login', async (req,res)=> {
+  app.post( '/api/login', async (req,res)=> {
     console.log( req.body )
     const username = req.body.username 
     const password = req.body.password
@@ -74,7 +74,8 @@ async function run() {
       req.body.password = hashedPassword
       const result = await collection.insertOne( req.body )
       req.session.user = username
-      res.json({status : req.session.login = true})
+      req.session.login = true
+      res.json({status : req.session.login})
     }
     //otherwise check if password matches stored password
     else if( await bcrypt.compare(password, existing_user.password) ){
@@ -83,31 +84,33 @@ async function run() {
       
       // since login was successful, send back to the client the login status
       req.session.user = username
-      res.json({status : req.session.login = true})
+      res.json({status : req.session.login})
     }else{
       // password incorrect
-      res.json({status : req.session.login = false})
+      req.session.login = false
+      res.json({status : req.session.login})
     }
   })
   //takes place of redirect middleware. checks session login status and sends it back, to be used on page refresh
-  app.get('status', (req, res) =>{
+  app.get('/api/status', (req, res) =>{
     const status = req.session.login
+    console.log(status)
     res.json({status: status})
   })
-  app.post( '/logout', async (req,res)=> {
+  app.post( '/api/logout', (req,res)=> {
     req.session.login = false
     delete req.session.user
     res.json({status: false})
   })
 
   // route to get all docs
-  app.get("/docs", async (req, res) => {
+  app.get("/api/docs", async (req, res) => {
     const docs = await collection.find({author : {$eq: req.session.user }}).toArray()
     res.json( docs )
   })
 
   //add item to DB
-  app.post( '/add', deriveDifficulty,  async (req,res) => {
+  app.post( '/api/add', deriveDifficulty,  async (req,res) => {
     req.body.author = req.session.user
     const result = await collection.insertOne( req.body )
     const id = result['insertedId']
@@ -119,14 +122,14 @@ async function run() {
 
   //remove item from DB 
   // where req.body is of form like {_id:5d91fb30f3f81b282d7be0dd } for 
-  app.post( '/remove', async (req,res) => {
+  app.post( '/api/remove', async (req,res) => {
     console.log(req.body._id)
     const result = await collection.deleteOne({ 
       _id:new ObjectId( req.body._id ) })
     res.json( result )
   })
   //update item in db, recieves whole recipe json
-  app.post( '/update', deriveDifficulty, async (req,res) => {
+  app.post( '/api/update', deriveDifficulty, async (req,res) => {
     const id = new ObjectId( req.body._id )
     const result = await collection.updateOne(
       { _id:  id},
@@ -135,15 +138,15 @@ async function run() {
               instructions : req.body.instructions,
               cookTime : req.body.cookTime,
               difficulty : req.body.difficulty,
-              author : req.body.author
+              author : req.session.user
        } })
     const recipe = await collection.findOne(id)
     recipe._id = recipe._id.toString()
     console.log(recipe)
     res.json(recipe)
   })
+  
+  ViteExpress.listen( app, 3000 )
 }
 
 run()
-
-ViteExpress.listen( app, 3000 )

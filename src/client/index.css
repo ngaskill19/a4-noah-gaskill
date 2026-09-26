@@ -2,11 +2,11 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background-image: url('../img/brown-gingham.jpg');
+  background-image: url('/brown-gingham.jpg');
   background-size: cover;
+  /* background-color: transparent!;
+  background: transparent!; */
 }

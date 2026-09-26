@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { RecipeForm } from '/RecipeForm.jsx'
-import { RecipeList } from '/RecipeList.jsx'
+import { useState, useEffect } from 'react'
+import RecipeForm from './RecipeForm.jsx'
+import RecipeList from './RecipeList.jsx'
 
-export default Dashboard = () => {
+export default function Dashboard(){
 	const [recipes, setRecipes] = useState([ ]) 
 	const [mode , setMode] = useState('add')
 	//used for changing form and prefilling fields
@@ -10,7 +10,7 @@ export default Dashboard = () => {
 
 	//get the recipes for the logged in user
 	useEffect( ()=> {
-		fetch( '/docs' )
+		fetch( '/api/docs' )
 			.then( response => response.json() )
 			.then( json => {
 				setRecipes( json ) 

@@ -1,28 +1,49 @@
-export default RecipeForm = ({mode, setMode, formData, setFormData, setRecipes, recipes}) =>{
+import { useState, useEffect, useRef } from 'react'
+
+export default function RecipeForm ({mode, setMode, formData, setFormData, setRecipes, recipes}){
 	const [ingredientList, setIngredientList] = useState([])
 	const [instructionList, setInstructionList] = useState([])
 
-	//prefill list fields if 
-	if(formData){
-		setIngredientList(formData.ingredients)
-		setInstructionList(formData.instructions)
-	}
+	const nameRef = useRef(null)
+	const timeRef = useRef(null)
+
+	//prefill list fields if they're there
+	useEffect( () => {
+		if(formData){
+			const ingredientsToEdit = formData.ingredients.map(ingredient => (
+				{ id: crypto.randomUUID(), name : ingredient }
+			))
+			const instructionsToEdit = formData.instructions.map(instruction => (
+				{ id: crypto.randomUUID(), name : instruction }
+			))
+			setIngredientList(ingredientsToEdit)
+			setInstructionList(instructionsToEdit)
+			if (nameRef.current) nameRef.current.value = formData.recipeName;
+    	if (timeRef.current) timeRef.current.value = formData.cookTime;
+		}else{
+			setIngredientList([])
+			setInstructionList([])
+			if(nameRef.current) nameRef.current.value = ''
+			if(timeRef.current) timeRef.current.value = 1
+		}
+	}, [formData])
 
 	const handleSubmit = async (event) =>{
-		const nameInput = document.querySelector( '#recipe-name' )
-  	const timeInput = document.querySelector('#cook-time')
+		event.preventDefault()
+		// const nameInput = document.querySelector( '#recipe-name' )
+  	// const timeInput = document.querySelector('#cook-time')
 		const listOfIngredients = ingredientList.map(item => item.name)
 		const listOfInstructions = instructionList.map(item => item.name)
 		
-		const json = { recipeName: nameInput.value, 
+		const json = { recipeName: nameRef.current.value, 
     	ingredients : listOfIngredients,
     	instructions : listOfInstructions,  
-    	cookTime : parseInt(timeInput.value)}
+    	cookTime : parseInt(timeRef.current.value)}
 		
-		let route = '/add'
+		let route = '/api/add'
 		if(formData){
-			json._id = formData.id
-			route = '/update'
+			json._id = formData._id
+			route = '/api/update'
 		}
 
 		const body = JSON.stringify( json )
@@ -39,13 +60,13 @@ export default RecipeForm = ({mode, setMode, formData, setFormData, setRecipes, 
 		setInstructionList([])
 		//if add mode, add recipe to top
 		if(mode === 'add'){
-			setRecipes([recipe, ...recipes])
+			setRecipes([...recipes, recipe])
 		}
 		//else in edit mode, find the recipe index and replace it with the updated recipe
 		else{
-			const index = recipes.findIndex(recipe => recipe.id === formData.id)
+			const index = recipes.findIndex(recipe => recipe._id === formData._id)
 			setRecipes(oldRecipes =>{
-				newRecipes = [...oldRecipes]
+				let newRecipes = [...oldRecipes]
 				newRecipes[index] = recipe
 				return newRecipes
 			})
@@ -61,17 +82,17 @@ export default RecipeForm = ({mode, setMode, formData, setFormData, setRecipes, 
 					{mode === 'add' ? 'Add Recipe' : `Editing Recipe for ${formData.recipeName}` }
 				</h2>
         <div className="field label">
-          <input type='text' id='recipe-name' defaultValue={formData ? formData.recipeName : ''} minLength = {1}/>
-          <label for='recipe-name'><strong>Recipe Name:</strong></label>
+          <input type='text' id='recipe-name' ref={nameRef} minLength = {1}/>
+          <label htmlFor='recipe-name'><strong>Recipe Name:</strong></label>
         </div>
         <div className="field label">
-          <input type='number' id='cook-time' defaultValue={formData ? formData.cookTime : 0} min = {1} />
-          <label for='cook-time'><strong>Cook time:</strong> </label>
+          <input type='number' id='cook-time' ref={timeRef} min = {1} />
+          <label htmlFor='cook-time'><strong>Cook time:</strong> </label>
         </div>
 				<ListInputField type = 'ingredient' list = {ingredientList} setList={setIngredientList}/>
 				<ListInputField type = 'instruction' list = {instructionList} setList={setInstructionList}/>
         <div className="right-align">
-          <button id="submit" class = 'submit' data-action="submit">
+          <button id="submit" className = 'submit' data-action="submit">
 					{mode === 'add' ? 'Submit Recipe' : 'Save Changes' }
 		    </button>
         </div>
@@ -80,17 +101,16 @@ export default RecipeForm = ({mode, setMode, formData, setFormData, setRecipes, 
 	)
 }
 
-const ListInputField = ({type, list, setList}) =>{
+function ListInputField ({type, list, setList}){
 	const [text, setText] = useState('')
-	
+	const ListType = type==='ingredient' ? 'ul' : 'ol'
 	const handleAdd = (itemText) =>{
 		const input = document.querySelector(`#${type}`)
-
 		const newItem = {
 			id : crypto.randomUUID(),
 			name : itemText
 		}
-		setList([...list, newItem] )
+		setList(prevList => [...prevList, newItem] )
 		setText('')
 		input.focus()
 		input.select()
@@ -98,13 +118,13 @@ const ListInputField = ({type, list, setList}) =>{
 	const handleDelete = (itemId) =>{
 		setList(list.filter(item => item.id !==itemId))
 	}
-
+	const fieldLabel = type.charAt(0).toUpperCase() + type.slice(1)
 	return(
 		<>
 			<div className="field padding">
-      	<label for={type}><strong>Ingredients:</strong></label>
-        <textarea id={type} minlength = {1} placeholder={`Enter an ${type}`} 
-					onChange={(e) => setText(e.target.value)}>
+      	<label htmlFor={type}><strong>{`${fieldLabel}s:`}</strong></label>
+        <textarea id={type} minLength = {1} placeholder={`Enter an ${type}`} 
+					onChange={(e) => setText(e.target.value)} value={text}>
 				</textarea>
         <output>Enter ingredients one by one</output>
       </div>
@@ -113,17 +133,17 @@ const ListInputField = ({type, list, setList}) =>{
 					onClick = {e => handleAdd(text)}>Add {type}</button>
       </div>
       <div className="padding">
-        <ul id={`${type}-list`} className="list border">
-					{list.map((listitem) =>{
+        <ListType id={`${type}-list`} className="list border">
+					{list.length>0 && list.map((listitem) =>
 						<li key={listitem.id}>
 							<div className='row'>
-								<span className='max'>listitem.name</span>
+								<span className='max'>{listitem.name}</span>
 								<button className='error' type='button' 
 									onClick={(e => handleDelete(listitem.id))}>X</button>
 							</div>
 						</li>
-					})}
-				</ul>
+					)}
+				</ListType>
       </div>
 		</>	
 	)
